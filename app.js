@@ -63,10 +63,8 @@ class Player {
   constructor() {
     this.x = 200;
     this.y = 400;
-    this.frameWidth = 476;
-    this.frameHeight = 517;
     this.width = 201;
-    this.height = 220;
+    this.height = 249;
     this.frameX = 0;
     this.frameY = 0;
     this.speed = 11;
@@ -103,7 +101,7 @@ class Player {
 const player = new Player();
 
 const playerImage = new Image();
-playerImage.src = '/elf/sprite.png';
+playerImage.src = '/elf/sprt.png';
 
 const layer1 = new Layer(backgroundLayer1, 0.3);
 const layer2 = new Layer(backgroundLayer2, 1, true);
@@ -190,7 +188,7 @@ function render() {
   pads.forEach(pad => pad.visibility === 'hidden' ? false : pad.drawPads());
 
   // draw player
-  ctx.drawImage(playerImage, player.frameX * player.frameWidth, player.frameY * player.frameHeight, player.frameWidth, player.frameHeight, player.x, player.y, player.width, player.height);
+  ctx.drawImage(playerImage, player.frameX * player.width, player.frameY * player.height, player.width, player.height, player.x, player.y, player.width, player.height);
 };
 
 // start of the game
