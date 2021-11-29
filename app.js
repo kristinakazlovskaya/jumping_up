@@ -93,7 +93,6 @@ class Player {
     if(keys[38]) {
       this.isJumping = true;
       this.y -= 5;
-      
     }
   }
 };
@@ -166,6 +165,7 @@ function update() {
   if (gameFrame % 5 == 0) {
     player.walkRight();
     player.walkLeft();
+    player.jump();
   };
 
   // make platfroms appear from above and move down
