@@ -2,7 +2,6 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const CANVAS_WIDTH = canvas.width = 800;
 const CANVAS_HEIGHT = canvas.height = 700;
-let scrollSpeed = 0; // adjust the speed of background movement (parallax)
 let animation;
 const keys = []; // control
 let gameFrame = 0; // adjust the player's movement speed
@@ -29,8 +28,9 @@ class Layer {
     this.y = -this.height * 2 + CANVAS_HEIGHT; // -3452
     this.startLayerY = -this.height * 2 + CANVAS_HEIGHT; // -3452
     this.image = image;
+    this.scrollSpeed = 0; // adjust the speed of background movement (parallax)
     this.speedModifier = speedModifier;
-    this.speed = scrollSpeed * this.speedModifier;
+    this.speed = this.scrollSpeed * this.speedModifier;
   }
 
   update() {
@@ -67,16 +67,18 @@ class Player {
     this.height = 249;
     this.frameX = 0;
     this.frameY = 0;
-    this.speed = 11;
-    this.isJumping = false;
+    this.speed = 10;
+    this.isJumping = null;
+    this.startPoint = 400;
   };
 
   walkRight() {
     if (keys[39] && this.x < CANVAS_WIDTH - this.width - 110) {
       this.x += this.speed;
       this.frameY = 2;
-      if (this.frameX < 9) player.frameX++
-      else player.frameX = 0;
+    
+      if (this.frameX < 9) this.frameX++
+      else this.frameX = 0;
     }
   }
 
@@ -84,15 +86,60 @@ class Player {
     if (keys[37] && this.x > 110) {
       this.x -= this.speed;
       this.frameY = 3;
-      if (this.frameX < 9) player.frameX++
-      else player.frameX = 0;
+
+      if (this.frameX < 9) this.frameX++
+      else this.frameX = 0;
     }
   }
 
   jump() {
-    if(keys[38]) {
+    if (keys[38]) {
       this.isJumping = true;
-      this.y -= 5;
+    };
+    if (this.isJumping) {
+      this.y -= 20;
+
+      // if player walked to the right before the jump or did not walk before the first jump, he will jump to the right
+      if (this.frameY === 2 || 0) {
+        this.frameY = 0;
+        // if he walked to the left, he will jump to the left
+      } else if (this.frameY === 3) {
+        this.frameY = 1;
+      };
+
+      // if during the jump player turns to the other side
+      if (keys[37]) { 
+        this.frameY = 1;
+      } else if (keys[39]) {
+        this.frameY = 0;
+      };
+
+      if (this.frameX < 5) this.frameX++;
+
+      if (this.y < this.startPoint - 175) {
+        this.isJumping = false;
+      }
+    }
+  }
+
+  fall() {
+    if (this.isJumping === false) {
+      this.y += 20;
+
+      // if during the fall player turns to the other side
+      if (keys[37]) { 
+        this.frameY = 1;
+      } else if (keys[39]) {
+        this.frameY = 0;
+      };
+
+      if (this.frameX > 4 && this.frameX < 9) this.frameX++;
+      else this.frameX = 0;
+
+      // if player falls off the platform, the game stops
+      if (this.y >= CANVAS_HEIGHT) {
+        gameOver();
+      }
     }
   }
 };
@@ -134,6 +181,19 @@ class Pad {
       this.visibility = 'visible';
     }
   }
+
+  landPlayer() {
+    if (
+      player.y + player.height === this.y + 5 &&
+      player.x >= this.x &&
+      player.x + this.width <= this.x + this.width &&
+      player.isJumping === false
+    ) {
+      console.log('landed');
+      player.y = this.y - player.height;
+      player.startPoint = player.y;
+    }
+  }
 }
 
 const padImage = new Image();
@@ -146,6 +206,14 @@ const pad3 = new Pad(2);
 const pad4 = new Pad(3, 'hidden');
 
 const pads = [pad0, pad1, pad2, pad3, pad4];
+
+function gameOver() {
+  layers.forEach(layer => {
+    layer.scrollSpeed = 0;
+    layer.speed = layer.scrollSpeed * layer.speedModifier;
+  });
+  pads.forEach(pad => pad.speed = 0);
+};
 
 // main game loop
 function animate() {
@@ -162,18 +230,24 @@ function update() {
   layers.forEach(layer => layer.startLayer ? layer.updateStartLayers() : layer.update());
 
   // organize player's movements 
-  if (gameFrame % 5 == 0) {
+  if (gameFrame % 4 == 0) {
     player.walkRight();
     player.walkLeft();
     player.jump();
+    player.fall();
+    pads.forEach(pad => pad.landPlayer());
   };
 
   // make platfroms appear from above and move down
   pads.forEach(pad => pad.movePads());
 
+  // if player jumped for the first time, layers and pads begin to scroll
   if (player.isJumping) {
-    scrollSpeed = 1;
-    pads.forEach(pad => pad.speed = 1);
+    layers.forEach(layer => {
+      layer.scrollSpeed = 2;
+      layer.speed = layer.scrollSpeed * layer.speedModifier;
+    });
+    pads.forEach(pad => pad.speed = 2);
   }
 };
 
