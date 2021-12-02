@@ -1,11 +1,11 @@
-// TODO: когда эльф летит вниз, ему бы уметь двигаться левее и правее; когда эльф идет по платформе, это надо анимировать; когда эльф вверху, что-то не красивое творится; ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса
+// TODO: когда эльф идет по платформе, это надо анимировать; когда удерживается клавиша вверх, прыжки повторяются, исправить; ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const CANVAS_WIDTH = canvas.width = 800;
 const CANVAS_HEIGHT = canvas.height = 700;
-let animation;
-const keys = []; // control
+let animation; // requestAnimationFrame
+const keys = []; // array of pressed keys
 let gameFrame = 0; // adjust the player's movement speed
 let jumpSound = new Audio();
 jumpSound.src = 'audio/jump.mp3';
@@ -28,17 +28,18 @@ class Layer {
   constructor(image, speedModifier, startLayer = false) {
     this.width = 800;
     this.height = 2076;
-    this.startLayer = startLayer;
+    this.startLayer = startLayer; // is a layer a starting one or not (if it is, it should be scrolled only once)
     this.x = 0;
     this.y = -this.height * 2 + CANVAS_HEIGHT; // -3452
     this.startLayerY = -this.height * 2 + CANVAS_HEIGHT; // -3452
     this.image = image;
     this.scrollSpeed = 0; // adjust the speed of background movement (parallax)
-    this.speedModifier = speedModifier;
+    this.speedModifier = speedModifier; // defines speed for each layer
     this.speed = this.scrollSpeed * this.speedModifier;
-    this.isStarted = false;
+    this.isStarted = false; // is background movement started
   }
 
+  // background movement logic
   update() {
     if (!this.startLayer && this.y > -this.height * 2 + CANVAS_HEIGHT + this.height) {
       this.y = -this.height * 2 + CANVAS_HEIGHT + this.speed * 2;
@@ -47,25 +48,28 @@ class Layer {
     };
   }
 
+  // background movement logic for starting layers
   updateStartLayers() {
     if (this.startLayer && this.startLayerY < -2100) {
       this.startLayerY += this.speed;
     };
   }
 
+  // rendering on canvas
   draw() {
     ctx.drawImage(this.image, this.x, this.y);
     ctx.drawImage(this.image, this.x, this.y + this.height);
   };
 
+  // starting layers rendering on canvas
   drawStartLayers() {
     if (this.startLayer && this.startLayerY < -2100) {
       ctx.drawImage(this.image, this.x, this.startLayerY + this.height);
     }
   };
 
+  // if player jumped for the first time, layers begin to scroll
   startScroll() {
-    // if player jumped for the first time, layers begin to scroll
     if (player.isJumping) {
       this.scrollSpeed = 1;
       this.speed = this.scrollSpeed * this.speedModifier;
@@ -73,6 +77,7 @@ class Layer {
     };
   };
 
+  // if player jumps high, background movement is accelerating until he goes down again
   speedUp() {
     if (this.isStarted && player.y > 50 && !isGaveOver) {
       player.jumpLength = 170;
@@ -92,17 +97,35 @@ class Player {
     this.y = 360;
     this.width = 201;
     this.height = 249;
-    this.frameX = 0;
-    this.frameY = 0;
-    this.speed = 15;
-    this.isLanded = true;
+    this.frameX = 0; // position on the sprite sheet
+    this.frameY = 0; // position on the sprite sheet
+    this.speed = 15; // player movement speed
+    this.isLanded = true; // is player on the ground
     this.isJumping = null;
-    this.startPoint = 360;
+    this.isWalkingRight = false;
+    this.isWalkingLeft = false;
+    this.startPoint = 360; // from where player jumps
     this.jumpLength = 170;
   };
 
+  controlStates() {
+    if (keys[39]) {
+      this.isWalkingRight = true;
+    } else {
+      this.isWalkingRight = false;
+    };
+    if (keys[37]) {
+      this.isWalkingLeft = true;
+    } else {
+      this.isWalkingLeft = false;
+    };
+    if (keys[38] && this.isLanded) {
+      this.isJumping = true;
+    };
+  }
+
   walkRight() {
-    if (keys[39] && this.isLanded && this.x < CANVAS_WIDTH - this.width - 110) {
+    if (this.isWalkingRight && !this.isJumping && this.x < CANVAS_WIDTH - this.width - 110) {
       this.x += this.speed;
       this.frameY = 2;
     
@@ -110,12 +133,12 @@ class Player {
         this.frameX++;
       } else {
         this.frameX = 0;
-      };
+      }
     }
   }
 
   walkLeft() {
-    if (keys[37] && this.isLanded && this.x > 110) {
+    if (this.isWalkingLeft && !this.isJumping && this.x > 110) {
       this.x -= this.speed;
       this.frameY = 3;
 
@@ -123,16 +146,12 @@ class Player {
         this.frameX++;
       } else {
         this.frameX = 0;
-      };
+      }
     }
   }
 
   jump() {
-    if (keys[38] && this.isLanded) {
-      this.isJumping = true;
-    };
-    
-    if (this.isJumping && this.isLanded) {
+    if (this.isJumping && this.isLanded && this.handleJump) {
       this.y -= 20;
 
       // if player walked to the right before the jump or did not walk before the first jump, he will jump to the right
@@ -143,24 +162,26 @@ class Player {
         this.frameY = 1;
       };
 
-      // if during the jump player turns to the other side
+      // if during the jump player turns and moves to the other side
       if (keys[37]) { 
         this.frameY = 1;
+        this.x -= this.speed;
       } else if (keys[39]) {
         this.frameY = 0;
+        this.x += this.speed;
       };
 
       if (this.frameX < 5) this.frameX++;
 
       if (this.y < this.startPoint - this.jumpLength) {
         this.isJumping = false;
-      }
+      };
     }
   }
 
   fall() {
     if (this.isJumping === false) {
-      this.y += 20;
+      this.y += 25;
       this.isLanded = false;
 
       // if during the fall player turns to the other side
@@ -182,6 +203,7 @@ class Player {
   }
 
   land() {
+    // platform landing logic
     pads.forEach(pad => {
       if (
         this.y + this.height >= pad.y &&
@@ -190,7 +212,7 @@ class Player {
         this.x + this.width - (this.width / 2) <= pad.x + pad.width &&
         this.isJumping === false
       ) {
-        this.y = pad.y - this.height + 30;
+        this.y = pad.y - this.height + 30; // + 30px to stand deeper on the pad
         this.startPoint = this.y;
         this.isLanded = true;
         //jumpSound.play();
@@ -219,9 +241,9 @@ class Pad {
     this.padGap = CANVAS_HEIGHT / this.padCount; // 175
     this.height = 83;
     this.width = 250;
-    this.speed = 0;
-    this.isStarted = false;
-    this.visibility = visibility;
+    this.speed = 0; // adjust the speed of pads movement
+    this.isStarted = false; // is pads movement started
+    this.visibility = visibility; // lower pad is invisible until it goes beyond canvas border
     this.y = (this.padGap / 2 - this.height / 2) + index * this.padGap; // 46 + i + 175
     this.x = Math.round(Math.random() * (CANVAS_WIDTH - this.width - 110 - 110) + 110); // x is random between 110 and 440
   }
@@ -230,6 +252,7 @@ class Pad {
     ctx.drawImage(padImage, this.x, this.y);
   }
 
+  // logic of pads movement
   movePads() {
     this.y += this.speed;
     if (this.y > CANVAS_HEIGHT) {
@@ -238,14 +261,15 @@ class Pad {
     }
   }
 
+  // if player jumped for the first time, pads begin to scroll
   startScroll() {
-    // if player jumped for the first time, pads begin to scroll
     if (player.isJumping) {
       this.speed = 1;
       this.isStarted = true;
     };
   }
 
+  // if player jumps high, pads movement is accelerating until he goes down again
   speedUp() {
     if (this.isStarted && player.y > 50 && !isGaveOver) {
       this.speed = 1;
@@ -285,22 +309,19 @@ function animate() {
 
 // logic of all changes
 function update() {
-  // make background layers move (parallax)
   layers.forEach(layer => layer.startLayer ? layer.updateStartLayers() : layer.update());
   layers.forEach(layer => layer.startScroll());
   layers.forEach(layer => layer.speedUp());
 
-  // organize player's movements 
+  player.controlStates();
   if (gameFrame % 4 == 0) {
     player.walkRight();
     player.walkLeft();
     player.jump();
     player.fall();
   };
-
   player.land();
 
-  // make platfroms appear from above and move down
   pads.forEach(pad => pad.movePads());
   pads.forEach(pad => pad.startScroll());
   pads.forEach(pad => pad.speedUp());
