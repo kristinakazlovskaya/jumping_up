@@ -151,7 +151,7 @@ class Player {
   }
 
   jump() {
-    if (this.isJumping && this.isLanded && this.handleJump) {
+    if (this.isJumping && this.isLanded) {
       this.y -= 20;
 
       // if player walked to the right before the jump or did not walk before the first jump, he will jump to the right
