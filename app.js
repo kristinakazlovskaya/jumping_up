@@ -5,7 +5,11 @@ const ctx = canvas.getContext('2d');
 const CANVAS_WIDTH = canvas.width = 800;
 const CANVAS_HEIGHT = canvas.height = 700;
 let animation; // requestAnimationFrame
-const keys = []; // array of pressed keys
+const states = {
+  walkRight : null,
+  walkLeft : null,
+  jump : null,
+}; // array of pressed keys
 let gameFrame = 0; // adjust the player's movement speed
 let jumpSound = new Audio();
 jumpSound.src = 'audio/jump.mp3';
@@ -102,30 +106,18 @@ class Player {
     this.speed = 15; // player movement speed
     this.isLanded = true; // is player on the ground
     this.isJumping = null;
-    this.isWalkingRight = false;
-    this.isWalkingLeft = false;
     this.startPoint = 360; // from where player jumps
     this.jumpLength = 170;
   };
 
   controlStates() {
-    if (keys[39]) {
-      this.isWalkingRight = true;
-    } else {
-      this.isWalkingRight = false;
-    };
-    if (keys[37]) {
-      this.isWalkingLeft = true;
-    } else {
-      this.isWalkingLeft = false;
-    };
-    if (keys[38] && this.isLanded) {
+    if (states.jump && this.isLanded) {
       this.isJumping = true;
     };
   }
 
   walkRight() {
-    if (this.isWalkingRight && !this.isJumping && this.x < CANVAS_WIDTH - this.width - 110) {
+    if (states.walkRight && !this.isJumping && this.x < CANVAS_WIDTH - this.width - 110) {
       this.x += this.speed;
       this.frameY = 2;
     
@@ -138,10 +130,10 @@ class Player {
   }
 
   walkLeft() {
-    if (this.isWalkingLeft && !this.isJumping && this.x > 110) {
+    if (states.walkLeft && !this.isJumping && this.x > 110) {
       this.x -= this.speed;
       this.frameY = 3;
-
+      
       if (this.frameX < 9) {
         this.frameX++;
       } else {
@@ -163,10 +155,10 @@ class Player {
       };
 
       // if during the jump player turns and moves to the other side
-      if (keys[37]) { 
+      if (states.walkLeft) { 
         this.frameY = 1;
         this.x -= this.speed;
-      } else if (keys[39]) {
+      } else if (states.walkRight) {
         this.frameY = 0;
         this.x += this.speed;
       };
@@ -185,9 +177,9 @@ class Player {
       this.isLanded = false;
 
       // if during the fall player turns to the other side
-      if (keys[37]) { 
+      if (states.walkLeft) { 
         this.frameY = 1;
-      } else if (keys[39]) {
+      } else if (states.walkRight) {
         this.frameY = 0;
       };
 
@@ -346,9 +338,21 @@ animate();
 
 // controls
 window.addEventListener('keydown', function(e) {
-  keys[e.keyCode] = true;
+  if (states.walkRight && e.code === 'ArrowLeft') {
+    states.walkRight = false;
+    states.walkLeft = true;
+  };
+  if (states.walkLeft && e.code === 'ArrowRight') {
+    states.walkLeft = false;
+    states.walkRight = true;
+  };
+  if (e.code === 'ArrowRight') states.walkRight = true;
+  if (e.code === 'ArrowLeft') states.walkLeft = true;
+  if (e.code === 'ArrowUp') states.jump = true;
 });
 window.addEventListener('keyup', function(e) {
-  delete keys[e.keyCode];
+  if (e.code === 'ArrowRight') states.walkRight = false;
+  if (e.code === 'ArrowLeft') states.walkLeft = false;
+  if (e.code === 'ArrowUp') states.jump = false;
 });
 
