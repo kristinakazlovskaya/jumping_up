@@ -1,4 +1,4 @@
-// TODO: когда эльф идет по платформе, это надо анимировать; когда удерживается клавиша вверх, прыжки повторяются, исправить; ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса
+// TODO: когда эльф идет по платформе, это надо анимировать (пересмотреть логику ходьбы); ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса; начать анимацию только после нажатаия первой клавиши
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -47,29 +47,23 @@ class Layer {
   update() {
     if (!this.startLayer && this.y > -this.height * 2 + CANVAS_HEIGHT + this.height) {
       this.y = -this.height * 2 + CANVAS_HEIGHT + this.speed * 2;
+    // background movement logic for starting layers
+    } else if (this.startLayer && this.startLayerY < -2100) {
+      this.startLayerY += this.speed;
     } else {
       this.y += this.speed;
-    };
-  }
-
-  // background movement logic for starting layers
-  updateStartLayers() {
-    if (this.startLayer && this.startLayerY < -2100) {
-      this.startLayerY += this.speed;
-    };
+    }
   }
 
   // rendering on canvas
   draw() {
-    ctx.drawImage(this.image, this.x, this.y);
-    ctx.drawImage(this.image, this.x, this.y + this.height);
-  };
-
-  // starting layers rendering on canvas
-  drawStartLayers() {
+    // starting layers rendering on canvas
     if (this.startLayer && this.startLayerY < -2100) {
       ctx.drawImage(this.image, this.x, this.startLayerY + this.height);
-    }
+    } else if (!this.startLayer) {
+      ctx.drawImage(this.image, this.x, this.y);
+      ctx.drawImage(this.image, this.x, this.y + this.height);
+    };
   };
 
   // if player jumped for the first time, layers begin to scroll
@@ -93,6 +87,16 @@ class Layer {
       this.speed = this.scrollSpeed * this.speedModifier;
     }
   }
+
+  static updateAll() {
+    layers.forEach(layer => layer.update());
+    layers.forEach(layer => layer.startScroll());
+    layers.forEach(layer => layer.speedUp());
+  };
+
+  static renderAll() {
+    layers.forEach(layer => layer.draw());
+  }
 }
 
 class Player {
@@ -106,12 +110,13 @@ class Player {
     this.speed = 15; // player movement speed
     this.isLanded = true; // is player on the ground
     this.isJumping = null;
+    this.isJumped = false; // is player made one jump
     this.startPoint = 360; // from where player jumps
     this.jumpLength = 170;
   };
 
   controlStates() {
-    if (states.jump && this.isLanded) {
+    if (states.jump && this.isLanded && !this.isJumped) {
       this.isJumping = true;
     };
   }
@@ -207,9 +212,42 @@ class Player {
         this.y = pad.y - this.height + 30; // + 30px to stand deeper on the pad
         this.startPoint = this.y;
         this.isLanded = true;
+        if (states.jump) { // if player landed, but the key Arrow Up is still pressed, player won't jump
+          player.isJumped = true;
+        };
+        // if (states.walkLeft) {
+        //   this.frameY = 3;
+        //   if (this.frameX < 9) {
+        //     this.frameX++;
+        //   } else {
+        //     this.frameX = 0;
+        //   }
+        // } else if (states.walkRight) {
+        //   this.frameY = 2;
+        //   if (this.frameX < 9) {
+        //     this.frameX++;
+        //   } else {
+        //     this.frameX = 0;
+        //   }
+        // };
         //jumpSound.play();
       }
     })
+  }
+
+  updateAll() {
+    this.controlStates();
+    if (gameFrame % 4 == 0) {
+      this.walkRight();
+      this.walkLeft();
+      this.jump();
+      this.fall();
+    };
+    this.land();
+  }
+
+  draw() {
+    ctx.drawImage(playerImage, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
   }
 };
 
@@ -241,7 +279,9 @@ class Pad {
   }
 
   drawPads() {
-    ctx.drawImage(padImage, this.x, this.y);
+    if (this.visibility !== 'hidden') {
+      ctx.drawImage(padImage, this.x, this.y);
+    };
   }
 
   // logic of pads movement
@@ -268,6 +308,16 @@ class Pad {
     } else if (player.y <= 50 && !isGaveOver) {
       this.speed = 3;
     }
+  }
+
+  static updateAll() {
+    pads.forEach(pad => pad.movePads());
+    pads.forEach(pad => pad.startScroll());
+    pads.forEach(pad => pad.speedUp());
+  }
+
+  static renderAll() {
+    pads.forEach(pad => pad.drawPads());
   }
 }
 
@@ -301,22 +351,9 @@ function animate() {
 
 // logic of all changes
 function update() {
-  layers.forEach(layer => layer.startLayer ? layer.updateStartLayers() : layer.update());
-  layers.forEach(layer => layer.startScroll());
-  layers.forEach(layer => layer.speedUp());
-
-  player.controlStates();
-  if (gameFrame % 4 == 0) {
-    player.walkRight();
-    player.walkLeft();
-    player.jump();
-    player.fall();
-  };
-  player.land();
-
-  pads.forEach(pad => pad.movePads());
-  pads.forEach(pad => pad.startScroll());
-  pads.forEach(pad => pad.speedUp());
+  Layer.updateAll();
+  player.updateAll();
+  Pad.updateAll();
 };
 
 // rendering
@@ -324,13 +361,11 @@ function render() {
   // clear canvas
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   // draw all background layers
-  layers.forEach(layer => layer.startLayer ? layer.drawStartLayers() : layer.draw());
-  
+  Layer.renderAll();
   // draw platforms
-  pads.forEach(pad => pad.visibility === 'hidden' ? false : pad.drawPads());
-
+  Pad.renderAll();
   // draw player
-  ctx.drawImage(playerImage, player.frameX * player.width, player.frameY * player.height, player.width, player.height, player.x, player.y, player.width, player.height);
+  player.draw();
 };
 
 // start of the game
@@ -353,6 +388,9 @@ window.addEventListener('keydown', function(e) {
 window.addEventListener('keyup', function(e) {
   if (e.code === 'ArrowRight') states.walkRight = false;
   if (e.code === 'ArrowLeft') states.walkLeft = false;
-  if (e.code === 'ArrowUp') states.jump = false;
+  if (e.code === 'ArrowUp') {
+    states.jump = false;
+    player.isJumped = false;
+  }
 });
 
