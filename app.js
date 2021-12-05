@@ -1,4 +1,4 @@
-// TODO: когда эльф идет по платформе, это надо анимировать (пересмотреть логику ходьбы); ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса; начать анимацию только после нажатаия первой клавиши
+// TODO: ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса; начать анимацию только после нажатаия первой клавиши; продумать, как перестать анимировать под ходьбу падение с платформы и озвучивать шаги в этот момент
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -13,7 +13,12 @@ const states = {
 let gameFrame = 0; // adjust the player's movement speed
 let jumpSound = new Audio();
 jumpSound.src = 'audio/jump.mp3';
+let stepsSound = new Audio();
+stepsSound.src = 'audio/steps_on_grass.mp3'
+let gameOverSound = new Audio();
+gameOverSound.src = 'audio/whistle_air.mp3';
 let isGaveOver = false;
+let isGameOverSoundPlayed = false;
 
 const backgroundLayer1 = new Image();
 backgroundLayer1.src = '/bg/sky.png';
@@ -110,19 +115,22 @@ class Player {
     this.speed = 15; // player movement speed
     this.isLanded = true; // is player on the ground
     this.isJumping = null;
+    this.isFalling = false;
     this.isJumped = false; // is player made one jump
     this.startPoint = 360; // from where player jumps
     this.jumpLength = 170;
+    this.isJumpSoundPlayed = false;
   };
 
   controlStates() {
     if (states.jump && this.isLanded && !this.isJumped) {
       this.isJumping = true;
-    }
+    };
   }
 
   walkRight() {
     if (states.walkRight && !this.isJumping && this.x < CANVAS_WIDTH - this.width - 110) {
+      if (this.isLanded && !this.isFalling) stepsSound.play();
       this.x += this.speed;
       this.frameY = 2;
     
@@ -131,11 +139,12 @@ class Player {
       } else {
         this.frameX = 0;
       };
-    }
+    } 
   }
 
   walkLeft() {
     if (states.walkLeft && !this.isJumping && this.x > 110) {
+      if (this.isLanded && !this.isFalling) stepsSound.play();
       this.x -= this.speed;
       this.frameY = 3;
       
@@ -150,6 +159,7 @@ class Player {
   jump() {
     if (this.isJumping && this.isLanded) {
       this.y -= 20;
+      this.isJumpSoundPlayed = false;
 
       // if player walked to the right before the jump or did not walk before the first jump, he will jump to the right
       if (this.frameY === 2 || 0) {
@@ -180,6 +190,7 @@ class Player {
     if (this.isJumping === false) {
       this.y += 25;
       this.isLanded = false;
+      this.isFalling = true;
 
       // fall animation
       if (this.frameX > 4 && this.frameX < 9) this.frameX++;
@@ -209,7 +220,13 @@ class Player {
         if (states.jump) { // if player landed, but the key Arrow Up is still pressed, player won't jump
           player.isJumped = true;
         };
-        //jumpSound.play();
+        if (!this.isJumpSoundPlayed) {
+          setTimeout(() => {
+            jumpSound.play();
+          }, 150);
+        };
+        this.isJumpSoundPlayed = true;
+        this.isFalling = false;
       }
     })
   }
@@ -317,6 +334,10 @@ function gameOver() {
     layer.speed = layer.scrollSpeed * layer.speedModifier;
   });
   pads.forEach(pad => pad.speed = 0);
+  if (!isGameOverSoundPlayed) {
+    gameOverSound.play();
+  };
+  isGameOverSoundPlayed = true;
 };
 
 // main game loop
@@ -367,6 +388,7 @@ window.addEventListener('keydown', function(e) {
 window.addEventListener('keyup', function(e) {
   if (e.code === 'ArrowRight') states.walkRight = false;
   if (e.code === 'ArrowLeft') states.walkLeft = false;
+  if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') stepsSound.pause();
   if (e.code === 'ArrowUp') {
     states.jump = false;
     player.isJumped = false;
