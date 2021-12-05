@@ -118,7 +118,7 @@ class Player {
   controlStates() {
     if (states.jump && this.isLanded && !this.isJumped) {
       this.isJumping = true;
-    };
+    }
   }
 
   walkRight() {
@@ -130,7 +130,7 @@ class Player {
         this.frameX++;
       } else {
         this.frameX = 0;
-      }
+      };
     }
   }
 
@@ -181,21 +181,15 @@ class Player {
       this.y += 25;
       this.isLanded = false;
 
-      // if during the fall player turns to the other side
-      if (states.walkLeft) { 
-        this.frameY = 1;
-      } else if (states.walkRight) {
-        this.frameY = 0;
-      };
-
+      // fall animation
       if (this.frameX > 4 && this.frameX < 9) this.frameX++;
-      else this.frameX = 0;
+      else if (this.frameX === 9) this.frameX = 0;
 
       // if player falls off the platform, the game stops
       if (this.y >= CANVAS_HEIGHT) {
         gameOver();
         isGaveOver = true;
-      }
+      };
     }
   }
 
@@ -215,21 +209,6 @@ class Player {
         if (states.jump) { // if player landed, but the key Arrow Up is still pressed, player won't jump
           player.isJumped = true;
         };
-        // if (states.walkLeft) {
-        //   this.frameY = 3;
-        //   if (this.frameX < 9) {
-        //     this.frameX++;
-        //   } else {
-        //     this.frameX = 0;
-        //   }
-        // } else if (states.walkRight) {
-        //   this.frameY = 2;
-        //   if (this.frameX < 9) {
-        //     this.frameX++;
-        //   } else {
-        //     this.frameX = 0;
-        //   }
-        // };
         //jumpSound.play();
       }
     })
