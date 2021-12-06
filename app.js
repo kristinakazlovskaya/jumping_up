@@ -91,7 +91,7 @@ class Layer {
 
   // if player jumped for the first time, layers begin to scroll
   startScroll() {
-    if (player.isJumping) {
+    if (player.isJumping && !this.isStarted) {
       this.scrollSpeed = 1;
       this.speed = this.scrollSpeed * this.speedModifier;
       this.isStarted = true;
@@ -100,14 +100,48 @@ class Layer {
 
   // if player jumps high, background movement is accelerating until he goes down again
   speedUp() {
-    if (this.isStarted && player.y > 50 && !isGaveOver) {
-      player.jumpLength = 170;
-      this.scrollSpeed = 1;
-      this.speed = this.scrollSpeed * this.speedModifier;
-    } else if (player.y <= 50 && !isGaveOver) {
-      player.jumpLength = 150;
-      this.scrollSpeed = 3;
-      this.speed = this.scrollSpeed * this.speedModifier;
+    if (this.isStarted && player.y > 30 && !isGaveOver) {
+      if (score.scoreValue <= 50) {
+        player.jumpLength = 170;
+        this.scrollSpeed = 1;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+      if (score.scoreValue <= 100 && score.scoreValue > 50) {
+        player.jumpLength = 160;
+        this.scrollSpeed = 2;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+      if (score.scoreValue <= 150 && score.scoreValue > 100) {
+        player.jumpLength = 150;
+        this.scrollSpeed = 3;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+      if (score.scoreValue > 150) {
+        player.jumpLength = 140;
+        this.scrollSpeed = 4;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+    } else if (player.y <= 30 && !isGaveOver) {
+      if (score.scoreValue <= 50) {
+        player.jumpLength = 150;
+        this.scrollSpeed = 3;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+      if (score.scoreValue <= 100 && score.scoreValue > 50) {
+        player.jumpLength = 140;
+        this.scrollSpeed = 4;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+      if (score.scoreValue <= 150 && score.scoreValue > 100) {
+        player.jumpLength = 130;
+        this.scrollSpeed = 5;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+      if (score.scoreValue > 150) {
+        player.jumpLength = 120;
+        this.scrollSpeed = 6;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
     }
   }
 
@@ -317,7 +351,7 @@ class Pad {
 
   // if player jumped for the first time, pads begin to scroll
   startScroll() {
-    if (player.isJumping) {
+    if (player.isJumping && !this.isStarted) {
       this.speed = 1;
       this.isStarted = true;
     };
@@ -325,10 +359,16 @@ class Pad {
 
   // if player jumps high, pads movement is accelerating until he goes down again
   speedUp() {
-    if (this.isStarted && player.y > 50 && !isGaveOver) {
-      this.speed = 1;
-    } else if (player.y <= 50 && !isGaveOver) {
-      this.speed = 3;
+    if (this.isStarted && player.y > 30 && !isGaveOver) {
+      if (score.scoreValue <= 50) this.speed = 1;
+      if (score.scoreValue <= 100 && score.scoreValue > 50) this.speed = 2;
+      if (score.scoreValue <= 150 && score.scoreValue > 100) this.speed = 3;
+      if (score.scoreValue > 150) this.speed = 4;
+    } else if (player.y <= 30 && !isGaveOver) {
+      if (score.scoreValue <= 50) this.speed = 3;
+      if (score.scoreValue <= 100 && score.scoreValue > 50) this.speed = 4;
+      if (score.scoreValue <= 150 && score.scoreValue > 100) this.speed = 5;
+      if (score.scoreValue > 150) this.speed = 6;
     }
   }
 
