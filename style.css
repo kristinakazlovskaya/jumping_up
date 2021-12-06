@@ -1,3 +1,8 @@
+@font-face {
+  font-family: "KinderBoys";
+  src: url(/fonts/KinderBoys.otf);
+}
+
 #canvas {
   position: absolute;
   width: 800px;

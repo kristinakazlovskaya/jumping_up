@@ -1,4 +1,4 @@
-// TODO: ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса; начать анимацию только после нажатаия первой клавиши; продумать, как перестать анимировать под ходьбу падение с платформы и озвучивать шаги 
+// TODO: ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса; начать анимацию только после нажатаия первой клавиши; продумать, как перестать анимировать под ходьбу падение с платформы 
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -32,6 +32,24 @@ const backgroundLayer5 = new Image();
 backgroundLayer5.src = '/bg/decor.png';
 const backgroundLayer6 = new Image();
 backgroundLayer6.src = '/bg/start.png';
+
+class Score {
+  constructor() {
+    this.scoreValue = 0;
+    this.isIncreased = false;
+  }
+
+  drawScore() {
+    ctx.font = '45px KinderBoys';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    ctx.strokeText(`Score: ${this.scoreValue}`, 15, 40);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`Score: ${this.scoreValue}`, 15, 40);
+  }
+}
+
+const score = new Score();
 
 class Layer {
   constructor(image, speedModifier, startLayer = false) {
@@ -130,7 +148,8 @@ class Player {
 
   walkRight() {
     if (states.walkRight && !this.isJumping && this.x < CANVAS_WIDTH - this.width - 110) {
-      if (this.isLanded && !this.isFalling) stepsSound.play();
+      if (this.isLanded && !this.isFalling) stepsSound.play()
+      else if (!this.isLanded && this.isFalling) stepsSound.pause();
       this.x += this.speed;
       this.frameY = 2;
     
@@ -139,12 +158,13 @@ class Player {
       } else {
         this.frameX = 0;
       };
-    } 
+    } else if (this.isJumping) stepsSound.pause();
   }
 
   walkLeft() {
     if (states.walkLeft && !this.isJumping && this.x > 110) {
-      if (this.isLanded && !this.isFalling) stepsSound.play();
+      if (this.isLanded && !this.isFalling) stepsSound.play()
+      else if (!this.isLanded && this.isFalling) stepsSound.pause();
       this.x -= this.speed;
       this.frameY = 3;
       
@@ -153,13 +173,14 @@ class Player {
       } else {
         this.frameX = 0;
       }
-    }
+    } else if (this.isJumping) stepsSound.pause();
   }
 
   jump() {
     if (this.isJumping && this.isLanded) {
       this.y -= 20;
       this.isJumpSoundPlayed = false;
+      score.isIncreased = false;
 
       // if player walked to the right before the jump or did not walk before the first jump, he will jump to the right
       if (this.frameY === 2 || 0) {
@@ -217,6 +238,7 @@ class Player {
         this.y = pad.y - this.height + 30; // + 30px to stand deeper on the pad
         this.startPoint = this.y;
         this.isLanded = true;
+        score.scoreValue;
         if (states.jump) { // if player landed, but the key Arrow Up is still pressed, player won't jump
           player.isJumped = true;
         };
@@ -227,6 +249,10 @@ class Player {
         };
         this.isJumpSoundPlayed = true;
         this.isFalling = false;
+        if (!score.isIncreased) {
+          score.scoreValue++;
+        };
+        score.isIncreased = true;
       }
     })
   }
@@ -366,6 +392,7 @@ function render() {
   Pad.renderAll();
   // draw player
   player.draw();
+  score.drawScore();
 };
 
 // start of the game
