@@ -1,4 +1,6 @@
-// TODO: ускорение спустя какое-то время реализовать, и следовательно исправить хардкод при ускорении скролла вверху канваса; начать анимацию только после нажатаия первой клавиши; продумать, как перестать анимировать под ходьбу падение с платформы 
+// TODO: добавить класс гейм и мвс; разбить на модули; начать анимацию только после нажатаия первой клавиши
+
+// Если время останется: продумать, как перестать анимировать под ходьбу падение с платформы, продумать, чтобы frameX прыжка был 0 до прыжка
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -107,41 +109,51 @@ class Layer {
         this.speed = this.scrollSpeed * this.speedModifier;
       };
       if (score.scoreValue <= 100 && score.scoreValue > 50) {
-        player.jumpLength = 160;
+        player.jumpLength = 150;
         this.scrollSpeed = 2;
         this.speed = this.scrollSpeed * this.speedModifier;
       };
       if (score.scoreValue <= 150 && score.scoreValue > 100) {
-        player.jumpLength = 150;
+        player.jumpLength = 130;
         this.scrollSpeed = 3;
         this.speed = this.scrollSpeed * this.speedModifier;
       };
-      if (score.scoreValue > 150) {
-        player.jumpLength = 140;
+      if (score.scoreValue <= 200 && score.scoreValue > 150) {
+        player.jumpLength = 120;
         this.scrollSpeed = 4;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+      if (score.scoreValue > 200) {
+        player.jumpLength = 110;
+        this.scrollSpeed = 5;
         this.speed = this.scrollSpeed * this.speedModifier;
       };
     } else if (player.y <= 30 && !isGaveOver) {
       if (score.scoreValue <= 50) {
-        player.jumpLength = 150;
-        this.scrollSpeed = 3;
-        this.speed = this.scrollSpeed * this.speedModifier;
-      };
-      if (score.scoreValue <= 100 && score.scoreValue > 50) {
-        player.jumpLength = 140;
+        player.jumpLength = 125;
         this.scrollSpeed = 4;
         this.speed = this.scrollSpeed * this.speedModifier;
       };
-      if (score.scoreValue <= 150 && score.scoreValue > 100) {
-        player.jumpLength = 130;
+      if (score.scoreValue <= 100 && score.scoreValue > 50) {
+        player.jumpLength = 115;
         this.scrollSpeed = 5;
         this.speed = this.scrollSpeed * this.speedModifier;
       };
-      if (score.scoreValue > 150) {
-        player.jumpLength = 120;
+      if (score.scoreValue <= 150 && score.scoreValue > 100) {
+        player.jumpLength = 105;
         this.scrollSpeed = 6;
         this.speed = this.scrollSpeed * this.speedModifier;
       };
+      if (score.scoreValue <= 200 && score.scoreValue > 150) {
+        player.jumpLength = 100;
+        this.scrollSpeed = 7;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      };
+      if (score.scoreValue > 200) {
+        player.jumpLength = 90;
+        this.scrollSpeed = 8;
+        this.speed = this.scrollSpeed * this.speedModifier;
+      }
     }
   }
 
@@ -164,7 +176,8 @@ class Player {
     this.height = 249;
     this.frameX = 0; // position on the sprite sheet
     this.frameY = 0; // position on the sprite sheet
-    this.speed = 15; // player movement speed
+    this.speed = 10; // player movement speed
+    this.speedX = 2;
     this.isLanded = true; // is player on the ground
     this.isJumping = null;
     this.isFalling = false;
@@ -227,10 +240,10 @@ class Player {
       // if during the jump player turns and moves to the other side
       if (states.walkLeft) { 
         this.frameY = 1;
-        this.x -= this.speed;
+        this.x -= this.speed * 2;
       } else if (states.walkRight) {
         this.frameY = 0;
-        this.x += this.speed;
+        this.x += this.speed * 2;
       };
 
       if (this.frameX < 5) this.frameX++;
@@ -271,8 +284,6 @@ class Player {
       ) {
         this.y = pad.y - this.height + 30; // + 30px to stand deeper on the pad
         this.startPoint = this.y;
-        this.isLanded = true;
-        score.scoreValue;
         if (states.jump) { // if player landed, but the key Arrow Up is still pressed, player won't jump
           player.isJumped = true;
         };
@@ -287,13 +298,27 @@ class Player {
           score.scoreValue++;
         };
         score.isIncreased = true;
+        this.isLanded = true;
+        if (this.isLanded && pad.isMoving) {
+          if (pad.speedX === 2) {
+            this.x += this.speedX;
+            if (states.walkRight) this.speed = 8;
+            if (states.walkLeft) this.speed = 14;
+          } else if (pad.speedX === -2) {
+            this.x -= this.speedX;
+            if (states.walkLeft) this.speed = 8;
+            if (states.walkRight) this.speed = 14;
+          } else {
+            this.speed = 10;
+          }
+        }
       }
     })
   }
 
   updateAll() {
     this.controlStates();
-    if (gameFrame % 4 == 0) {
+    if (gameFrame % 3 == 0) {
       this.walkRight();
       this.walkLeft();
       this.jump();
@@ -322,16 +347,18 @@ const layer6 = new Layer(backgroundLayer6, 1, true);
 const layers = [layer1, layer2, layer3, layer4, layer5, layer6];
 
 class Pad {
-  constructor(index, visibility = 'visible') {
+  constructor(index, visibility = 'visible', isMoving = false) {
     this.padCount = 4;
     this.padGap = CANVAS_HEIGHT / this.padCount; // 175
-    this.height = 83;
-    this.width = 250;
+    this.height = 70;
+    this.width = 210;
     this.speed = 0; // adjust the speed of pads movement
+    this.speedX = 2;
+    this.isMoving = isMoving;
     this.isStarted = false; // is pads movement started
     this.visibility = visibility; // lower pad is invisible until it goes beyond canvas border
     this.y = (this.padGap / 2 - this.height / 2) + index * this.padGap; // 46 + i + 175
-    this.x = Math.round(Math.random() * (CANVAS_WIDTH - this.width - 110 - 110) + 110); // x is random between 110 and 440
+    this.x = Math.floor(Math.random() * (CANVAS_WIDTH - this.width - 110 - 110 + 1) + 110); // x is random between 110 and 440
   }
 
   drawPads() {
@@ -349,6 +376,15 @@ class Pad {
     }
   }
 
+  moveHorizontally() {
+    if (this.isMoving) {
+      this.x += this.speedX;
+      if (this.x >= CANVAS_WIDTH - this.width - 110 || this.x <= 110) {
+        this.speedX = -this.speedX;
+      };
+    }
+  }
+
   // if player jumped for the first time, pads begin to scroll
   startScroll() {
     if (player.isJumping && !this.isStarted) {
@@ -363,12 +399,14 @@ class Pad {
       if (score.scoreValue <= 50) this.speed = 1;
       if (score.scoreValue <= 100 && score.scoreValue > 50) this.speed = 2;
       if (score.scoreValue <= 150 && score.scoreValue > 100) this.speed = 3;
-      if (score.scoreValue > 150) this.speed = 4;
+      if (score.scoreValue <= 200 && score.scoreValue > 150) this.speed = 4;
+      if (score.scoreValue > 200) this.speed = 5;
     } else if (player.y <= 30 && !isGaveOver) {
-      if (score.scoreValue <= 50) this.speed = 3;
-      if (score.scoreValue <= 100 && score.scoreValue > 50) this.speed = 4;
-      if (score.scoreValue <= 150 && score.scoreValue > 100) this.speed = 5;
-      if (score.scoreValue > 150) this.speed = 6;
+      if (score.scoreValue <= 50) this.speed = 4;
+      if (score.scoreValue <= 100 && score.scoreValue > 50) this.speed = 5;
+      if (score.scoreValue <= 150 && score.scoreValue > 100) this.speed = 6;
+      if (score.scoreValue <= 200 && score.scoreValue > 150) this.speed = 7;
+      if (score.scoreValue > 200) this.speed = 8;
     }
   }
 
@@ -376,6 +414,7 @@ class Pad {
     pads.forEach(pad => pad.movePads());
     pads.forEach(pad => pad.startScroll());
     pads.forEach(pad => pad.speedUp());
+    pads.forEach(pad => pad.moveHorizontally());
   }
 
   static renderAll() {
@@ -388,9 +427,9 @@ padImage.src = '/bg/pad.png';
 
 const pad0 = new Pad(-1); // invisible upper platform for smooth appearance
 const pad1 = new Pad(0);
-const pad2 = new Pad(1);
+const pad2 = new Pad(1, 'visible', true);
 const pad3 = new Pad(2);
-const pad4 = new Pad(3, 'hidden');
+const pad4 = new Pad(3, 'hidden', true);
 
 const pads = [pad0, pad1, pad2, pad3, pad4];
 
