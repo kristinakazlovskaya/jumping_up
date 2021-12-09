@@ -1,5 +1,7 @@
 const btnPlay = document.getElementById('play');
 
+let gameJSIsLoaded = false;
+
 document.addEventListener('click', openGame);
 
 function openGame() {
@@ -9,22 +11,49 @@ function openGame() {
 function renderGamePage(data) {
   const container = document.getElementById('mainpage');
   container.innerHTML = data;
-  const gameScript = document.createElement('script');
-  gameScript.src = 'app.js';
-  document.body.appendChild(gameScript);
+  if (!gameJSIsLoaded) {
+    const gameScript = document.createElement('script');
+    gameScript.src = 'app.js';
+    document.body.appendChild(gameScript);
+    gameJSIsLoaded = true;
+  }
 };
 
-function showError(data) {
-  console.log('error' + data);
-}
+function renderIndexPage(data) {
+  const container = document.getElementById('mainpage');
+  container.innerHTML = data;
+};
 
 function updatePage() {
-  $.ajax('game.html', {
-      type: "GET",
-      dataType: "html",
-      success: renderGamePage,
-      error: showError
-  })
+  let hash = window.location.hash.substr(1);
+
+  switch (hash) {
+    case "":
+      $.ajax("index.html", {
+          type: "GET",
+          datatype: "html",
+          success: renderIndexPage,
+      });
+      break;
+    case "index":
+      $.ajax(hash + ".html", {
+          type: "GET",
+          datatype: "html",
+          success: renderIndexPage,
+      });
+      break;
+    case "game":
+      $.ajax(hash + ".html", {
+          type: "GET",
+          datatype: "html",
+          success: renderGamePage,
+      });
+      break;
+  }
 };
 
 window.onhashchange = updatePage;
+
+updatePage()
+
+//rewrite with Fetch
