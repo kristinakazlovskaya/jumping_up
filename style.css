@@ -3,8 +3,7 @@
   src: url(/fonts/KinderBoys.otf);
 }
 
-#canvas,
-.container {
+#canvas {
   position: absolute;
   width: 800px;
   height: 700px;
@@ -14,5 +13,6 @@
 }
 
 .container {
-  background-color: #444;
+  width: 100%;
+  height: 100%;
 }
