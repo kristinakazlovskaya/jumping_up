@@ -2,7 +2,7 @@
   "name": "game",
   "version": "1.0.0",
   "description": "Jumping Up Game",
-  "main": "index.html",
+  "main": "main.html",
   "dependencies": {
     "lite-server": "^2.6.1"
   },
