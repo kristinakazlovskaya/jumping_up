@@ -19,5 +19,77 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #444;
+  background-image: url("bg/startpic.png");
+}
+
+.container .game_title {
+  transform: rotate(-54deg);
+  position: relative;
+  width: 470px;
+  height: 90px;
+}
+
+.container .game_title span {
+  font: 170px KinderBoys;
+  color: #fff;
+  width: 20px;
+  height: 400px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  text-shadow: -6px -6px 6px #000;
+  transform-origin: bottom center;
+}
+
+.container .game_title .char1 {
+  transform: rotate(6deg);
+}
+
+.container .game_title .char2 {
+  transform: rotate(14deg);
+}
+
+.container .game_title .char3 {
+  transform: rotate(25deg);
+}
+
+.container .game_title .char4 {
+  transform: rotate(42deg);
+}
+
+.container .game_title .char5 {
+  transform: rotate(54deg);
+}
+
+.container .game_title .char6 {
+  transform: rotate(61deg);
+}
+
+.container .game_title .char7 {
+  transform: rotate(74deg);
+}
+
+.container .game_title .char8 {
+  transform: rotate(90deg);
+}
+
+.container .game_title .char9 {
+  transform: rotate(101deg);
+}
+
+.container .play {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+}
+
+.container .highscore {
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+  background: none;
+  border: none;
 }
