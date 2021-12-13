@@ -1,4 +1,4 @@
-// TODO: добавить класс гейм и мвс; разбить на модули; начать анимацию только после нажатаия первой клавиши; звук прыжка
+// TODO: добавить класс гейм и мвс; разбить на модули; звук прыжка
 
 // Если время останется: продумать, как перестать анимировать под ходьбу падение с платформы, продумать, чтобы frameX прыжка был 0 до прыжка
 
@@ -345,7 +345,6 @@ const layer5 = new Layer(backgroundLayer5, 1);
 const layer6 = new Layer(backgroundLayer6, 1, true);
 
 const layers = [layer1, layer2, layer3, layer4, layer5, layer6];
-
 class Pad {
   constructor(index, visibility = 'visible', isMoving = false) {
     this.padCount = 4;

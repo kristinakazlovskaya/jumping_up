@@ -10,19 +10,13 @@
 </head>
 <body>
   <div class="container" id="mainpage">
-    <div class="game_title">
-      <span class="char1">J</span>
-      <span class="char2">u</span>
-      <span class="char3">m</span>
-      <span class="char4">p</span>
-      <span class="char5">i</span>
-      <span class="char6">n</span>
-      <span class="char7">g</span>
-      <span class="char8">U</span>
-      <span class="char9">p</span>
+    <div class="modal">
+      <div class="modal_input_container">
+        <label class="modal_label" for="modal_name_input">Enter your name</label>
+        <input class="modal_input" type="text" id="modal_name_input" spellcheck="false" autocomplete="off">
+        <button class="modal_submit_btn" id="submit_player_name"><img src="/gui/ok.png" alt="Okay" width="55" height="55"></button>
+      </div>
     </div>
-    <button class="play" id="playBtn"><img src="/gui/play.png" alt="Play" width="160"></button>
-    <button class="highscore" id="highscoreBtn"><img src="/gui/prize.png" alt="Highscore" width="80"></button>
   </div>
   <script src="index.js"></script>
 </body>

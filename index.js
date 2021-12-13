@@ -1,60 +1,100 @@
-let btnPlay = document.querySelector('#playBtn');
-
 let gameJSIsLoaded = false;
+let submitNameBtn = document.getElementById('submit_player_name');
+let nameInput = document.getElementById('modal_name_input');
+let btnClickSound = new Audio();
+btnClickSound.src = '/audio/click.mp3';
 
-btnPlay.addEventListener('click', openGame);
+nameInput.addEventListener('input', function() {
+  this.value = this.value.replace(/[^0-9A-Za-z]/,'');
+});
+
+submitNameBtn.addEventListener('click', () => {
+  if (nameInput.value) {
+    btnClickSound.play();
+    openMain();
+  }
+});
+
+function openMain() {
+  window.location.hash = 'main';
+};
 
 function openGame() {
-  window.location.hash = "game";
+  window.location.hash = 'game';
+};
+
+function openHighscore() {
+  window.location.hash = 'highscore';
+};
+
+function renderMainPage(data) {
+  const container = document.getElementById('mainpage');
+  container.innerHTML = data;
+
+  let btnPlay = document.getElementById('playBtn');
+  let highscoreBtn = document.getElementById('highscoreBtn');
+
+  btnPlay.addEventListener('click', () => {
+    btnClickSound.play();
+    openGame();
+  });
+  highscoreBtn.addEventListener('click', () => {
+    btnClickSound.play();
+    openHighscore();
+  });
 };
 
 function renderGamePage(data) {
   const container = document.getElementById('mainpage');
   container.innerHTML = data;
   if (!gameJSIsLoaded) {
-  const gameScript = document.createElement('script');
-  gameScript.src = 'app.js';
-  document.body.appendChild(gameScript);
-  gameJSIsLoaded = true;
+    const gameScript = document.createElement('script');
+    gameScript.src = 'app.js';
+    document.body.appendChild(gameScript);
+    gameJSIsLoaded = true;
   }
 };
 
-function renderIndexPage(data) {
+function renderScorePage(data) {
   const container = document.getElementById('mainpage');
   container.innerHTML = data;
+
+  let closeHighscoreBtn = document.getElementById('close_highscore_btn');
+  closeHighscoreBtn.addEventListener('click', () => {
+    btnClickSound.play();
+    openMain();
+  });
 };
 
 function updatePage() {
   let hash = window.location.hash.substr(1);
 
   switch (hash) {
-    // case "":
-    //   $.ajax("index.html", {
-    //       type: "GET",
-    //       datatype: "html",
-    //       success: renderIndexPage,
-    //   });
-    //   break;
-    // case "index":
-    //   $.ajax(hash + ".html", {
-    //       type: "GET",
-    //       datatype: "html",
-    //       success: renderIndexPage,
-    //   });
-    //   break;
-    case "game":
+    case "main":
       $.ajax(hash + ".html", {
           type: "GET",
           datatype: "html",
-          success: renderGamePage,
+          success: renderMainPage,
+      });
+      break;
+    case "game":
+      $.ajax(hash + ".html", {
+        type: "GET",
+        datatype: "html",
+        success: renderGamePage,
+      });
+      break;
+    case "highscore":
+      $.ajax(hash + ".html", {
+        type: "GET",
+        datatype: "html",
+        success: renderScorePage,
       });
       break;
   }
 };
 
-//window.addEventListener('DOMContentLoaded', () => {
-  window.addEventListener('hashchange', updatePage);
-  updatePage();
-//});
+window.addEventListener('hashchange', updatePage);
+updatePage();
 
 //rewrite with Fetch
