@@ -1,4 +1,3 @@
-let gameJSIsLoaded = false;
 let submitNameBtn = document.getElementById('submit_player_name');
 let nameInput = document.getElementById('modal_name_input');
 let btnClickSound = new Audio();
@@ -47,12 +46,9 @@ function renderMainPage(data) {
 function renderGamePage(data) {
   const container = document.getElementById('mainpage');
   container.innerHTML = data;
-  if (!gameJSIsLoaded) {
-    const gameScript = document.createElement('script');
-    gameScript.src = 'app.js';
-    document.body.appendChild(gameScript);
-    gameJSIsLoaded = true;
-  }
+  const gameScript = document.createElement('script');
+  gameScript.src = 'app.js';
+  document.body.appendChild(gameScript);
 };
 
 function renderScorePage(data) {
@@ -96,5 +92,3 @@ function updatePage() {
 
 window.addEventListener('hashchange', updatePage);
 updatePage();
-
-//rewrite with Fetch
