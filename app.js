@@ -1,6 +1,4 @@
-// TODO: добавить классы мвс; разбить на модули; звук прыжка
-
-// Если время останется: продумать, как перестать анимировать под ходьбу падение с платформы, продумать, чтобы frameX прыжка был 0 до прыжка
+// TODO: звук прыжка, тряска при ходьбе на движущейся платформе
 
 (function() {
   class Game {
@@ -34,8 +32,29 @@
       this.isGameOverSoundPlayed = true;
     }
 
+    drawGameOverModal() {
+      if (this.isGaveOver) {
+        this.ctx.drawImage(gameOverModal, 225, 187);
+        this.ctx.drawImage(gameOverModalInner, 236, 189);
+        this.ctx.drawImage(restartBtn, 331, 423);
+        this.ctx.drawImage(menuBtn, 414, 423);
+        this.ctx.font = '45px KinderBoys';
+        this.ctx.textAlign = 'center';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 4;
+        this.ctx.strokeText('Your score:', 400, 289);
+        this.ctx.fillStyle = '#fff';
+        this.ctx.fillText('Your score:', 400, 289);
+        this.ctx.font = '85px KinderBoys';
+        this.ctx.lineWidth = 5;
+        this.ctx.strokeText(`${this.scoreValue}`, 400, 354);
+        this.ctx.fillText(`${this.scoreValue}`, 400, 354);
+      };
+    }
+
     drawScore() {
       this.ctx.font = '45px KinderBoys';
+      this.ctx.textAlign = 'start';
       this.ctx.strokeStyle = '#000';
       this.ctx.lineWidth = 4;
       this.ctx.strokeText(`Score: ${this.scoreValue}`, 15, 40);
@@ -65,6 +84,15 @@
   backgroundLayer5.src = '/bg/decor.png';
   const backgroundLayer6 = new Image();
   backgroundLayer6.src = '/bg/start.png';
+
+  let gameOverModal = new Image();
+  gameOverModal.src = '/gui/bg_small.png';
+  let gameOverModalInner = new Image();
+  gameOverModalInner.src = '/gui/table_small.png';
+  let restartBtn = new Image();
+  restartBtn.src = '/gui/restart.png';
+  let menuBtn = new Image();
+  menuBtn.src = '/gui/menu.png';
 
   class Layer {
     constructor(image, speedModifier, startLayer = false) {
@@ -293,7 +321,8 @@
           this.y + this.height <= pad.y + pad.height &&
           this.x + (this.width / 2) >= pad.x &&
           this.x + this.width - (this.width / 2) <= pad.x + pad.width &&
-          this.isJumping === false
+          this.isJumping === false &&
+          pad.visibility !== 'hidden'
         ) {
           this.y = pad.y - this.height + 30; // + 30px to stand deeper on the pad
           this.startPoint = this.y;
@@ -457,11 +486,11 @@
       // draw player
       player.draw();
       game.drawScore();
+      game.drawGameOverModal();
     }
   };
 
   const view = new View();
-
   
   class Controller {
     control() {
@@ -513,5 +542,5 @@
 
   const modal = new Modal();
   // start of the game
-  modal.animate();
+  playerImage.onload = modal.animate();
 })();

@@ -159,7 +159,6 @@
   background-image: url(/gui/bg_small.png);
   width: 350px;
   height: 325px;
-  background-size: 350px 325px;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -169,8 +168,7 @@
 .container .modal .modal_input_container {
   background-image: url(/gui/table_small.png);
   width: 320px;
-  height: 232px;
-  background-size: 320px 232px;
+  height: 233px;
   position: absolute;
   top: 2px;
   left: 50%;
