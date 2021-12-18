@@ -1,4 +1,4 @@
-// TODO: звук прыжка, тряска при ходьбе на движущейся платформе
+// TODO: звук прыжка, тряска при ходьбе на движущейся платформе в противоположную движению сторону
 
 (function() {
   class Game {
@@ -18,6 +18,8 @@
       this.isGameOverSoundPlayed = false;
       this.scoreValue = 0;
       this.isScoreIncreased = false;
+      this.isRestarting = false;
+      this.isRestartClicked = false;
     }
 
     gameOver() {
@@ -32,8 +34,18 @@
       this.isGameOverSoundPlayed = true;
     }
 
+    restart() {
+      if (this.isRestartClicked) {
+        this.isRestarting = true;
+        this.isGaveOver = false;
+        this.scoreValue = 0;
+        this.isGameOverSoundPlayed = false;
+        gameOverSound.pause();
+      };
+    }
+
     drawGameOverModal() {
-      if (this.isGaveOver) {
+      if (this.isGaveOver && !this.isRestarting) {
         this.ctx.drawImage(gameOverModal, 225, 187);
         this.ctx.drawImage(gameOverModalInner, 236, 189);
         this.ctx.drawImage(restartBtn, 331, 423);
@@ -50,6 +62,10 @@
         this.ctx.strokeText(`${this.scoreValue}`, 400, 354);
         this.ctx.fillText(`${this.scoreValue}`, 400, 354);
       };
+    }
+
+    checkCollision(x, y, btnX, btnY, btnWidth, btnHeight) {
+      return x >= btnX && x <= btnX + btnWidth && y >= btnY && y <= btnY + btnHeight;
     }
 
     drawScore() {
@@ -198,10 +214,22 @@
       }
     }
 
+    restart() {
+      if (game.isRestarting) {
+        this.x = 0;
+        this.y = -this.height * 2 + game.canvasHeight;
+        this.startLayerY = -this.height * 2 + game.canvasHeight;
+        this.scrollSpeed = 0;
+        this.speed = this.scrollSpeed * this.speedModifier;
+        this.isStarted = false;
+      };
+    }
+
     static updateAll() {
       layers.forEach(layer => layer.update());
       layers.forEach(layer => layer.startScroll());
       layers.forEach(layer => layer.speedUp());
+      layers.forEach(layer => layer.restart());
     }
 
     static renderAll() {
@@ -236,6 +264,8 @@
 
     walkRight() {
       if (game.states.walkRight && !this.isJumping && this.x < game.canvasWidth - this.width - 110) {
+        game.isRestarting = false;
+        game.isRestartClicked = false;
         if (this.isLanded && !this.isFalling) stepsSound.play()
         else if (!this.isLanded && this.isFalling) stepsSound.pause();
         this.x += this.speed;
@@ -246,11 +276,13 @@
         } else {
           this.frameX = 0;
         };
-      } else if (this.isJumping) stepsSound.pause();
+      } else if (this.isJumping || this.x >= game.canvasWidth - this.width - 110) stepsSound.pause();
     }
 
     walkLeft() {
       if (game.states.walkLeft && !this.isJumping && this.x > 110) {
+        game.isRestarting = false;
+        game.isRestartClicked = false;
         if (this.isLanded && !this.isFalling) stepsSound.play()
         else if (!this.isLanded && this.isFalling) stepsSound.pause();
         this.x -= this.speed;
@@ -261,11 +293,13 @@
         } else {
           this.frameX = 0;
         }
-      } else if (this.isJumping) stepsSound.pause();
+      } else if (this.isJumping || this.x <= 110) stepsSound.pause();
     }
 
     jump() {
       if (this.isJumping && this.isLanded) {
+        game.isRestarting = false;
+        game.isRestartClicked = false;
         this.y -= 20;
         this.isJumpSoundPlayed = false;
         game.isScoreIncreased = false;
@@ -330,9 +364,9 @@
             player.isJumped = true;
           };
           if (!this.isJumpSoundPlayed) {
-            setTimeout(() => {
+            //setTimeout(() => {
               jumpSound.play();
-            }, 150);
+            //}, 150);
           };
           this.isJumpSoundPlayed = true;
           this.isFalling = false;
@@ -358,6 +392,24 @@
       })
     }
 
+    restart() {
+      if (game.isRestarting) {
+        this.x = 200;
+        this.y = 360;
+        this.frameX = 0; // position on the sprite sheet
+        this.frameY = 0; // position on the sprite sheet
+        this.speed = 10; // player movement speed
+        this.speedX = 2;
+        this.isLanded = true; // is player on the ground
+        this.isJumping = null;
+        this.isFalling = false;
+        this.isJumped = false; // is player made one jump
+        this.startPoint = 360; // from where player jumps
+        this.jumpLength = 170;
+        this.isJumpSoundPlayed = false;
+      }
+    }
+
     updateAll() {
       this.controlStates();
       if (game.gameFrame % 3 == 0) {
@@ -367,6 +419,7 @@
         this.fall();
       };
       this.land();
+      this.restart();
     }
 
     draw() {
@@ -397,9 +450,10 @@
       this.speed = 0; // adjust the speed of pads movement
       this.speedX = 2;
       this.isMoving = isMoving;
+      this.index = index;
       this.isStarted = false; // is pads movement started
       this.visibility = visibility; // lower pad is invisible until it goes beyond canvas border
-      this.y = (this.padGap / 2 - this.height / 2) + index * this.padGap; // 46 + i + 175
+      this.y = (this.padGap / 2 - this.height / 2) + this.index * this.padGap; // 46 + i + 175
       this.x = Math.floor(Math.random() * (game.canvasWidth - this.width - 110 - 110 + 1) + 110); // x is random between 110 and 440
     }
 
@@ -419,7 +473,7 @@
     }
 
     moveHorizontally() {
-      if (this.isMoving) {
+      if (this.isMoving && !game.isGaveOver) {
         this.x += this.speedX;
         if (this.x >= game.canvasWidth - this.width - 110 || this.x <= 110) {
           this.speedX = -this.speedX;
@@ -452,11 +506,27 @@
       }
     }
 
+    restart() {
+      if (game.isRestarting) {
+        this.isStarted = false;
+        this.speed = 0;
+      };
+    }
+
     static updateAll() {
       pads.forEach(pad => pad.movePads());
       pads.forEach(pad => pad.startScroll());
       pads.forEach(pad => pad.speedUp());
       pads.forEach(pad => pad.moveHorizontally());
+      pads.forEach((pad, index) => {
+        if (index === 4 && game.isRestarting) {
+          pad.visibility = 'hidden';
+        };
+        if (game.isRestarting) {
+          pad.y = (pad.padGap / 2 - pad.height / 2) + pad.index * pad.padGap;
+        };
+        pad.restart();
+      });
     }
 
     static renderAll() {
@@ -516,6 +586,41 @@
           player.isJumped = false;
         }
       });
+      function onMouseDownHandler(e) {
+        if (game.checkCollision(e.offsetX, e.offsetY, 331, 423, 55, 55) && game.isGaveOver) {
+          game.isRestartClicked = true;
+          game.canvas.removeEventListener('mousedown', onMouseDownHandler);
+          game.canvas.removeEventListener('mousemove', onMouseMoveHandler);
+          game.canvas.style.cursor = 'default';
+          btnClickSound.play();
+        };
+
+        if (game.checkCollision(e.offsetX, e.offsetY, 414, 423, 55, 55) && game.isGaveOver) {
+          openMain();
+          btnClickSound.play();
+        };
+      };
+      function onMouseMoveHandler(e) {
+        if (game.checkCollision(e.offsetX, e.offsetY, 331, 423, 55, 55) && game.isGaveOver) {
+          game.canvas.style.cursor = 'pointer';
+        } else if (!game.checkCollision(e.offsetX, e.offsetY, 331, 423, 55, 55) && game.isGaveOver) {
+          game.canvas.style.cursor = 'default';
+        } else if (game.checkCollision(e.offsetX, e.offsetY, 331, 423, 55, 55) && !game.isGaveOver) {
+          game.canvas.style.cursor = 'default';
+        };
+
+        if (game.checkCollision(e.offsetX, e.offsetY, 414, 423, 55, 55) && game.isGaveOver) {
+          game.canvas.style.cursor = 'pointer';
+        } else if (!game.checkCollision(e.offsetX, e.offsetY, 331, 423, 55, 55) && game.isGaveOver) {
+          game.canvas.style.cursor = 'default';
+        } else if (game.checkCollision(e.offsetX, e.offsetY, 331, 423, 55, 55) && !game.isGaveOver) {
+          game.canvas.style.cursor = 'default';
+        };
+      };
+      if (game.isGaveOver) {
+        game.canvas.addEventListener('mousedown', onMouseDownHandler);
+        game.canvas.addEventListener('mousemove', onMouseMoveHandler);
+      };
     }
   };
 
@@ -527,6 +632,7 @@
       Layer.updateAll();
       player.updateAll();
       Pad.updateAll();
+      game.restart();
     }
 
     // main game loop

@@ -28,6 +28,7 @@ function openHighscore() {
 
 function renderMainPage(data) {
   const container = document.getElementById('mainpage');
+  container.style.backgroundImage = 'url("bg/startpic.png")';
   container.innerHTML = data;
 
   let btnPlay = document.getElementById('playBtn');
@@ -45,6 +46,7 @@ function renderMainPage(data) {
 
 function renderGamePage(data) {
   const container = document.getElementById('mainpage');
+  container.style.backgroundImage = 'none';
   container.innerHTML = data;
   const gameScript = document.createElement('script');
   gameScript.src = 'app.js';
