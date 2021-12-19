@@ -1,4 +1,4 @@
-// TODO: звук прыжка, тряска при ходьбе на движущейся платформе в противоположную движению сторону
+// TODO: SCORE, RESTART, звук прыжка, тряска при ходьбе на движущейся платформе в противоположную движению сторону
 
 (function() {
   class Game {
@@ -20,6 +20,7 @@
       this.isScoreIncreased = false;
       this.isRestarting = false;
       this.isRestartClicked = false;
+      this.isResultsStored = false;
     }
 
     gameOver() {
@@ -32,6 +33,12 @@
         gameOverSound.play();
       };
       this.isGameOverSoundPlayed = true;
+      if (!this.isResultsStored) {
+        score = this.scoreValue;
+        saveInfo();
+        this.isResultsStored = true;
+      }
+      cancelAnimationFrame(this.animation);
     }
 
     restart() {
@@ -300,6 +307,7 @@
       if (this.isJumping && this.isLanded) {
         game.isRestarting = false;
         game.isRestartClicked = false;
+        game.isResultsStored = false;
         this.y -= 20;
         this.isJumpSoundPlayed = false;
         game.isScoreIncreased = false;
@@ -564,7 +572,7 @@
   
   class Controller {
     control() {
-      window.addEventListener('keydown', function(e) {
+      function onKeyDownHandler(e) {
         if (game.states.walkRight && e.code === 'ArrowLeft') {
           game.states.walkRight = false;
           game.states.walkLeft = true;
@@ -576,21 +584,26 @@
         if (e.code === 'ArrowRight') game.states.walkRight = true;
         if (e.code === 'ArrowLeft') game.states.walkLeft = true;
         if (e.code === 'ArrowUp') game.states.jump = true;
-      });
-      window.addEventListener('keyup', function(e) {
+      };
+      function onKeyUpHandler(e) {
         if (e.code === 'ArrowRight') game.states.walkRight = false;
         if (e.code === 'ArrowLeft') game.states.walkLeft = false;
         if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') stepsSound.pause();
         if (e.code === 'ArrowUp') {
           game.states.jump = false;
           player.isJumped = false;
-        }
-      });
+        };
+      };
+      document.addEventListener('keydown', onKeyDownHandler);
+      document.addEventListener('keyup', onKeyUpHandler);
       function onMouseDownHandler(e) {
         if (game.checkCollision(e.offsetX, e.offsetY, 331, 423, 55, 55) && game.isGaveOver) {
           game.isRestartClicked = true;
+          game.gameFrame = 0;
           game.canvas.removeEventListener('mousedown', onMouseDownHandler);
           game.canvas.removeEventListener('mousemove', onMouseMoveHandler);
+          document.removeEventListener('keydown', onKeyDownHandler);
+          document.removeEventListener('keyup', onKeyUpHandler);
           game.canvas.style.cursor = 'default';
           btnClickSound.play();
         };
