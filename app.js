@@ -1,4 +1,4 @@
-// TODO: SCORE, RESTART, звук прыжка, тряска при ходьбе на движущейся платформе в противоположную движению сторону
+// TODO: звук прыжка при падении на нижнюю платформу
 
 (function() {
   class Game {
@@ -17,7 +17,7 @@
       this.isGaveOver = false;
       this.isGameOverSoundPlayed = false;
       this.scoreValue = 0;
-      this.isScoreIncreased = false;
+      //this.isScoreIncreased = false;
       this.isRestarting = false;
       this.isRestartClicked = false;
       this.isResultsStored = false;
@@ -310,7 +310,7 @@
         game.isResultsStored = false;
         this.y -= 20;
         this.isJumpSoundPlayed = false;
-        game.isScoreIncreased = false;
+        //game.isScoreIncreased = false;
 
         // if player walked to the right before the jump or did not walk before the first jump, he will jump to the right
         if (this.frameY === 2 || 0) {
@@ -372,16 +372,14 @@
             player.isJumped = true;
           };
           if (!this.isJumpSoundPlayed) {
-            //setTimeout(() => {
-              jumpSound.play();
-            //}, 150);
+            jumpSound.play();
+            this.isJumpSoundPlayed = true;
           };
-          this.isJumpSoundPlayed = true;
           this.isFalling = false;
-          if (!game.isScoreIncreased) {
-            game.scoreValue++;
-          };
-          game.isScoreIncreased = true;
+          // if (!game.isScoreIncreased) {
+          //   game.scoreValue++;
+          // };
+          // game.isScoreIncreased = true;
           this.isLanded = true;
           if (this.isLanded && pad.isMoving) {
             if (pad.speedX === 2) {
@@ -476,8 +474,11 @@
       this.y += this.speed;
       if (this.y > game.canvasHeight) {
         this.y = -this.padGap;
+        if (this.visibility === 'visible') {
+          game.scoreValue++;
+        };
         this.visibility = 'visible';
-      }
+      };
     }
 
     moveHorizontally() {
